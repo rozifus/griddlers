@@ -1,5 +1,8 @@
+from __future__ import print_function
+
 from pyglet import window
 from pyglet import clock
+from pyglet import event
 
 
 class GameWindow(window.Window):
@@ -7,47 +10,60 @@ class GameWindow(window.Window):
         super(GameWindow, self).__init__(*args, **kwargs)
         self.has_exit = False
         self.inputManager = None
-        self.drawManager = None
+        self.drawManager = WindowDrawManager(self)
         self.playerManager = None
         self.gameManager = GameManager(self)
 
-    def main_loop(self):
-        clock.set_fps_limit(30)
-        while not self.has_exit:
-            self.dispatch_events()
-            #self.update()
-            self.clear()
-            #self.draw()
+    def on_draw(self):
+        self.drawManager.draw()
 
-            clock.tick()
-            #Gets fps and draw it
-            #self.fps_label.text = "%d" % clock.get_fps()
-            #self.fps_label.draw()
 
-            self.flip()
+
+
+
+class WindowDrawManager(event.EventDispatcher):
+    def __init__(self, parent):
+        super(WindowDrawManager, self).__init__()
+        self.parent = parent
+
+    def draw(self):
+        print('window_draw')
+        self.dispatch_event('window_draw')
+
+WindowDrawManager.register_event_type('window_draw')
+
+        
+
 
 class GameManager(object):
     def __init__(self, parent):
         self.parent = parent
         self.level = None
 
+        self.loadLevel(None)
+
     def loadLevel(self, level):
-        self.level = Level(this)
+        self.level = Level(self)
 
 
 class Level(object):
     def __init__(self, parent):
         self.parent = parent
         self.grid = None
+        self.drawDisp = LevelDrawDispatcher()
+
+        self.initialize()
 
     def initialize(self):
-        self.grid = Grid()
+        self.parent.parent.drawManager.push_handlers(window_draw=self.drawDisp.draw)
+        self.grid = None 
         
+class LevelDrawDispatcher(event.EventDispatcher):
+    def draw(self):
+        print("level_draw")
+        self.dispatch_event('level_draw')
 
-
-
-
-
+LevelDrawDispatcher.register_event_type('level_draw')
 
 
 
