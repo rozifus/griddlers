@@ -4,6 +4,8 @@ from pyglet import window
 from pyglet import clock
 from pyglet import event
 
+import trigrid
+
 
 class GameWindow(window.Window):
     def __init__(self, *args, **kwargs):
@@ -14,10 +16,6 @@ class GameWindow(window.Window):
         self.playerManager = None
         self.gameManager = GameManager(self)
 
-    def on_draw(self):
-        self.drawManager.draw()
-
-
 
 
 
@@ -26,13 +24,18 @@ class WindowDrawManager(event.EventDispatcher):
         super(WindowDrawManager, self).__init__()
         self.parent = parent
 
+        self.initialize()
+
+    def initialize(self):
+        self.parent.push_handlers(on_draw=self.draw)
+
     def draw(self):
-        print('window_draw')
+        self.parent.clear()
         self.dispatch_event('window_draw')
+        self.parent.flip()
 
 WindowDrawManager.register_event_type('window_draw')
 
-        
 
 
 class GameManager(object):
@@ -46,6 +49,7 @@ class GameManager(object):
         self.level = Level(self)
 
 
+
 class Level(object):
     def __init__(self, parent):
         self.parent = parent
@@ -55,17 +59,17 @@ class Level(object):
         self.initialize()
 
     def initialize(self):
-        self.parent.parent.drawManager.push_handlers(window_draw=self.drawDisp.draw)
-        self.grid = None 
-        
+        self.parent.parent.drawManager.push_handlers(
+                        window_draw=self.drawDisp.draw)
+        self.grid = trigrid.TriGrid(self, 25, 25, 20, 20)
+        self.drawDisp.push_handlers(level_draw=self.grid.draw)
+
+
 class LevelDrawDispatcher(event.EventDispatcher):
     def draw(self):
-        print("level_draw")
         self.dispatch_event('level_draw')
 
 LevelDrawDispatcher.register_event_type('level_draw')
-
-
 
 
 
