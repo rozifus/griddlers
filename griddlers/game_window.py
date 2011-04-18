@@ -7,6 +7,16 @@ from pyglet.window import mouse
 
 import trigrid
 
+heightmap = """
+         00000000000
+         00001111100
+         00012112110
+         00112213210
+         00112333210
+         01123433210
+         01223432211
+         01123333221"""
+
 
 class GameWindow(window.Window):
     def __init__(self, *args, **kwargs):
@@ -58,7 +68,8 @@ class Level(event.EventDispatcher):
     def __init__(self, parent):
         self.parent = parent
         self.camera = Camera(0,0, *self.parent.parent.get_size())
-        self.grid = trigrid.TriGrid(self, 25, 25, 20, 20)
+        self.grid = trigrid.TriGrid(self, 11, 8, 20, 30)
+        self.grid.contour(heightmap)
 
         self.activate()
 
