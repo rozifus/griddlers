@@ -10,6 +10,7 @@ class Edge:
 
 class TriNode:
     def __init__(self, x, y):
+        self.content = None
         self.x, self.y = x, y
         self.e1 = self.e2 = self.e3 = None
         self.e4 = self.e5 = self.e6 = None 
@@ -57,13 +58,16 @@ class TriGrid:
     def getNodeAt(self, x, y):
         return self.nodes.get((x,y), None)
 
-    def draw(self):
+    def activate(self):
+        self.parent.push_handlers(level_draw=self.draw)
+
+    def draw(self, camera):
         gl.glLoadIdentity()
         gl.glBegin(gl.GL_LINES)
         gl.glColor3f(1.0,1.0,1.0)
         for edge in self.edges:
-            gl.glVertex2f(edge.start.x, edge.start.y)
-            gl.glVertex2f(edge.end.x, edge.end.y)
+            gl.glVertex2f(edge.start.x-camera.x, edge.start.y-camera.y)
+            gl.glVertex2f(edge.end.x-camera.x, edge.end.y-camera.y)
         gl.glEnd()
 
 
