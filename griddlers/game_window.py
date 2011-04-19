@@ -7,15 +7,26 @@ from pyglet.window import mouse
 
 import trigrid
 
-heightmap = """
+heightMap = """
          00000000000
-         00001111100
-         00012112110
-         00112213210
-         00112333210
-         01123433210
-         01223432211
-         01123333221"""
+         00000011100
+         00000001210
+         00100001210
+         00111111210
+         01123233210
+         01223444411
+         01123444421"""
+
+materialMap = """
+         wwwwwwwwwww
+         wwwwwwwggww
+         wwwwwwwgggg
+         wwgwwwwgggg
+         wwggggggggg
+         wggggmgmggg
+         wggmmmmmmgg
+         wgggmmmmmgg"""
+
 
 
 class GameWindow(window.Window):
@@ -69,7 +80,8 @@ class Level(event.EventDispatcher):
         self.parent = parent
         self.camera = Camera(0,0, *self.parent.parent.get_size())
         self.grid = trigrid.TriGrid(self, 11, 8, 20, 30)
-        self.grid.contour(heightmap)
+        self.grid.contour(heightMap)
+        self.grid.materialize(materialMap)
 
         self.activate()
 

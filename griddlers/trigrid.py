@@ -1,5 +1,10 @@
-
+from __future__ import print_function
 from pyglet import gl
+
+color = {}
+color['w'] = (0.1, 0.1, 0.9)
+color['g'] = (0.1, 0.9, 0.3)
+color['m'] = (0.9, 0.7, 0.2)
 
 class Edge(object):
     def __init__(self, start, end):
@@ -11,6 +16,7 @@ class Edge(object):
 class TriNode(object):
     def __init__(self, x, y):
         self.content = None
+        self.mat = None
         self.x, self.y = x, y
         self.vx, self.vy = x, y
         self.e1 = self.e2 = self.e3 = None
@@ -33,20 +39,20 @@ class TriGrid(object):
             conn = self.getNodeAt(node.x - self.xs, node.y + self.ys)
             if conn:
                 edge = Edge(conn, node)
-                node.p1 = edge
-                conn.p6 = edge
+                node.e1 = edge
+                conn.e6 = edge
                 self.edges.append(edge)
             conn = self.getNodeAt(node.x - self.xs * 2, node.y)
             if conn:
                 edge = Edge(conn, node)
-                node.p2 = edge 
-                node.p5 = edge
+                node.e2 = edge 
+                conn.e5 = edge
                 self.edges.append(edge)
             conn = self.getNodeAt(node.x - self.xs, node.y - self.ys)
             if conn:
                 edge = Edge(conn, node)
-                node.p3 = edge 
-                node.p4 = edge
+                node.e3 = edge 
+                conn.e4 = edge
                 self.edges.append(edge)
 
     def generateBaseNodePositions(self):
@@ -88,7 +94,26 @@ class TriGrid(object):
         for x,y in self.generateBaseNodePositions():
             node = self.nodes[(x,y)] 
             applyContour(node, contourGen.next())
-    
+
+    def materialize(self, materialMap):
+        valid = ['w', 'g', 'm']
+        def getNextMaterial(materialMap):
+            linearMap = ""
+            for char in materialMap:
+                if char in valid:
+                    linearMap += char
+            for li in range(self.y)[::-1]:
+                line = linearMap[li*self.x: (li+1)*self.x]
+                for char in line:
+                    yield char
+
+
+        materialGen = getNextMaterial(materialMap)
+        for x,y in self.generateBaseNodePositions():
+            node = self.nodes[(x,y)] 
+            node.mat = materialGen.next()
+
+
         
     def getNodeAt(self, x, y):
         return self.nodes.get((x,y), None)
@@ -98,12 +123,38 @@ class TriGrid(object):
 
     def draw(self, camera):
         gl.glLoadIdentity()
+        gl.glBegin(gl.GL_TRIANGLES)
+        gl.glColor3f(1.0,1.0,1.0)
+        for node in self.nodes.values():
+            if node.e4:
+                node2 = node.e4.end
+                if node2.e6:
+                    node3 = node2.e6.end
+                    gl.glColor3f(*color[node.mat])
+                    gl.glVertex2f(node.vx-camera.x, node.vy-camera.y)
+                    gl.glColor3f(*color[node2.mat])
+                    gl.glVertex2f(node2.vx-camera.x, node2.vy-camera.y)
+                    gl.glColor3f(*color[node3.mat])
+                    gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
+            if node.e5:
+                node2 = node.e5.end
+                if node2.e3:
+                    node3 = node2.e3.start
+                    gl.glColor3f(*color[node.mat])
+                    gl.glVertex2f(node.vx-camera.x, node.vy-camera.y)
+                    gl.glColor3f(*color[node2.mat])
+                    gl.glVertex2f(node2.vx-camera.x, node2.vy-camera.y)
+                    gl.glColor3f(*color[node3.mat])
+                    gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
+        gl.glEnd()
+                
         gl.glBegin(gl.GL_LINES)
         gl.glColor3f(1.0,1.0,1.0)
         for edge in self.edges:
             gl.glVertex2f(edge.start.vx-camera.x, edge.start.vy-camera.y)
             gl.glVertex2f(edge.end.vx-camera.x, edge.end.vy-camera.y)
         gl.glEnd()
+
 
 
         
