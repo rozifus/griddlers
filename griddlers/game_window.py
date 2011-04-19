@@ -8,24 +8,24 @@ from pyglet.window import mouse
 import trigrid
 
 heightMap = """
-         00000000000
-         00000011100
-         00000001210
-         00100001210
-         00111111210
-         01123233210
-         01223444411
-         01123444421"""
+         0000000000000000
+         0000001110000000
+         0000000121000000
+         0010000121001000
+         0011111121111100
+         0112323321211111
+         0122344441222111
+         0112344442232111"""
 
 materialMap = """
-         wwwwwwwwwww
-         wwwwwwwggww
-         wwwwwwwgggg
-         wwgwwwwgggg
-         wwggggggggg
-         wggggmgmggg
-         wggmmmmmmgg
-         wgggmmmmmgg"""
+         wwwwwwwwwwwwwwww
+         wwwwwwwggwwwwwww
+         wwwwwwwggggwwwww
+         wwgwwwwggggwgwww
+         wwggggggggggggww
+         wggggmgmgggggggg
+         wggmmmmmmggggggg
+         wgggmmmmmggmgggg"""
 
 
 
@@ -79,7 +79,7 @@ class Level(event.EventDispatcher):
     def __init__(self, parent):
         self.parent = parent
         self.camera = Camera(0,0, *self.parent.parent.get_size())
-        self.grid = trigrid.TriGrid(self, 11, 8, 20, 30)
+        self.grid = trigrid.TriGrid(self, 16, 8, 20, 30)
         self.grid.contour(heightMap)
         self.grid.materialize(materialMap)
 
@@ -90,6 +90,7 @@ class Level(event.EventDispatcher):
         self.parent.parent.drawManager.push_handlers(
                         window_draw=self.draw)
         self.parent.parent.push_handlers(on_mouse_drag=self.mouse_drag)
+        self.parent.parent.push_handlers(on_mouse_press=self.mouse_press)
 
     def draw(self):
         self.dispatch_event('level_draw', self.camera)
@@ -98,6 +99,10 @@ class Level(event.EventDispatcher):
         if buttons & mouse.RIGHT:
             self.camera.x += dx
             self.camera.y += dy
+
+    def mouse_press(self, x, y, buttons, modi):
+        if buttons & mouse.LEFT:
+            self.grid.selected = self.grid.getVisualNodeAt(self.camera, x, y)
 
 Level.register_event_type('level_draw')
 
