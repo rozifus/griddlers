@@ -3,9 +3,11 @@ from __future__ import print_function
 from pyglet import window
 from pyglet import clock
 from pyglet import event
-from pyglet.window import mouse
+from pyglet.window import mouse, key
+
 
 import trigrid
+import mapgen
 
 heightMap = """
          0000000000000000
@@ -79,9 +81,20 @@ class Level(event.EventDispatcher):
     def __init__(self, parent):
         self.parent = parent
         self.camera = Camera(0,0, *self.parent.parent.get_size())
-        self.grid = trigrid.TriGrid(self, 16, 8, 20, 30)
-        self.grid.contour(heightMap)
-        self.grid.materialize(materialMap)
+        self.grid = trigrid.TriGrid(self, 30, 30, 20, 30)
+
+        try:
+            hmap = open('hmap.txt', 'r')
+            mmap = open('mmap.txt', 'r')
+            self.grid.contour(hmap)
+            self.grid.materialize(mmap)
+            hmap.close()
+            mmap.close()
+        except:
+            mg = mapgen.MapGen(self.grid.x, self.grid.y)
+            cont, mat = mg.createDefaultMap()
+            self.grid.contour(cont)
+            self.grid.materialize(mat)
 
         self.activate()
 
@@ -91,6 +104,7 @@ class Level(event.EventDispatcher):
                         window_draw=self.draw)
         self.parent.parent.push_handlers(on_mouse_drag=self.mouse_drag)
         self.parent.parent.push_handlers(on_mouse_press=self.mouse_press)
+        self.parent.parent.push_handlers(on_key_press=self.key_press)
 
     def draw(self):
         self.dispatch_event('level_draw', self.camera)
@@ -103,6 +117,14 @@ class Level(event.EventDispatcher):
     def mouse_press(self, x, y, buttons, modi):
         if buttons & mouse.LEFT:
             self.grid.selected = self.grid.getVisualNodeAt(self.camera, x, y)
+
+    def key_press(self, symbol, modi):
+        if symbol == key.U:
+            if self.grid.selected:
+                self.grid.selected.raiseZ()
+        elif symbol == key.I:
+            if self.grid.selected:
+                self.grid.selected.lowerZ()
 
 Level.register_event_type('level_draw')
 

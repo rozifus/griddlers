@@ -14,13 +14,53 @@ class Edge(object):
         self.end = end
 
 class TriNode(object):
-    def __init__(self, x, y):
+    def __init__(self, grid, x, y):
+        self.grid = grid
         self.content = None
         self.mat = None
+        self.z = None
         self.x, self.y = x, y
         self.vx, self.vy = x, y
         self.e1 = self.e2 = self.e3 = None
         self.e4 = self.e5 = self.e6 = None 
+
+    def setZ(self, char):
+        self.z = char 
+        if char == '0': 
+            self.vy = self.y
+            self.mat = 'w'
+        elif char == '1': 
+            self.vy = self.y + self.grid.ys / 5 
+            self.mat = 'g'
+        elif char == '2':
+            self.vy = self.y + (2 * self.grid.ys) / 5 
+            self.mat = 'g'
+        elif char == '3':
+            self.vy = self.y + (3 * self.grid.ys) / 5
+            self.mat = 'm'
+        elif char == '4':
+            self.vy = self.y + (4 * self.grid.ys) / 5
+            self.mat = 'm'
+
+    def raiseZ(self):
+        if self.z == '0':
+            self.setZ('1')
+        elif self.z == '1':
+            self.setZ('2')
+        elif self.z == '2':
+            self.setZ('3')
+        elif self.z == '3':
+            self.setZ('4')
+
+    def lowerZ(self):
+        if self.z == '4':
+            self.setZ('3')
+        elif self.z == '3':
+            self.setZ('2')
+        elif self.z == '2':
+            self.setZ('1')
+        elif self.z == '1':
+            self.setZ('0')
 
     def edgeList(self):
         if self.e1: yield self.e1
@@ -48,7 +88,7 @@ class TriGrid(object):
         self.selected = None
 
         for x,y in self.generateBaseNodePositions():
-            self.nodeMap[(x,y)] = TriNode(x,y)
+            self.nodeMap[(x,y)] = TriNode(self,x,y)
 
         self.nodes = self.nodeMap.values()
 
@@ -82,8 +122,15 @@ class TriGrid(object):
             for x in range(0, self.x*self.xs*2, self.xs*2):
                 if shift == 1: x += self.xs 
                 yield x,y 
+    
+    def getContour(self):
+        contourMap = '' 
+        for y in range(self.y):
+            for x in range(self.x):
+                contourMap += nodeMap((x,y)).z
 
     def contour(self, contourMap):
+        print(contourMap)
         valid = ['0', '1', '2', '3', '4', 'w']
         def getNextContour(contourMap):
             linearMap = ""
@@ -96,19 +143,17 @@ class TriGrid(object):
                     yield char
 
         def applyContour(node, char):    
-            if char == '0': pass
-            elif char == '1': 
-                node.vy = node.y + self.ys / 5 
-            elif char == '2':
-                node.vy = node.y + (2 * self.ys) / 5 
-            elif char == '3':
-                node.vy = node.y + (3 * self.ys) / 5
-            elif char == '4':
-                node.vy = node.y + (4 * self.ys) / 5
+            node.setZ(char)
 
         contourGen = getNextContour(contourMap)
         for x,y in self.generateBaseNodePositions():
             applyContour(self.getNodeAt(x,y), contourGen.next())
+ 
+    def getMaterial(self):
+        materialMap = '' 
+        for y in range(self.y):
+            for x in range(self.x):
+                materialMap += nodeMap((x,y)).mat
 
     def materialize(self, materialMap):
         valid = ['w', 'g', 'm']
@@ -178,18 +223,15 @@ class TriGrid(object):
         bottom = divy * self.ys 
         top = bottom + self.ys
 
-        print(left, top)
         node0 = self.getNodeAt(left,top)
         if node0:
             minDist = getVisualDistance(node0, x, y)
             minNode = node0
             for node in generateNodeHex(node0):
                 nDist = getVisualDistance(node, x, y)
-                print(nDist)
                 if nDist < minDist:
                     minDist = nDist
                     minNode = node
-                print(minNode.vx, minNode.vy)
 
             return minNode 
         return None
