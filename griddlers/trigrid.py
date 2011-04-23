@@ -70,6 +70,16 @@ class TriNode(object):
         if self.e5: yield self.e5
         if self.e6: yield self.e6
 
+    def leftEdgeList(self):
+        if self.e1: yield self.e1
+        if self.e2: yield self.e2
+        if self.e3: yield self.e3
+
+    def rightEdgeList(self):
+        if self.e4: yield self.e4
+        if self.e5: yield self.e5
+        if self.e6: yield self.e6
+
     def nodeList(self):
         if self.e1: yield self.e1.start
         if self.e2: yield self.e2.start
@@ -78,18 +88,31 @@ class TriNode(object):
         if self.e5: yield self.e5.end
         if self.e6: yield self.e6.end
 
-class TriGrid(object):
-    def __init__(self, parent, x, y, sizex, sizey):
-        self.parent = parent
+class Sector(object):
+    def __init__(self, x, y, w, h):
         self.x, self.y = x, y
-        self.xs, self.ys = sizex, sizey
+        self.w, self.h = w, h
+        self.nodes = []
+    
+    def inSector(self, x, y):
+        if x >= self.x and x < self.x+self.w \
+        and y >= self.y and y < self.y+self.h:
+            return True
+        return False
+
+class TriGrid(object):
+    def __init__(self, p_level, x, y, xs, ys):
+        self.p_level = p_level
+        self.x, self.y = x, y
+        self.xs, self.ys = xs, ys
         self.nodeMap = {}
         self.edges = [] 
         self.selected = None
 
         for x,y in self.generateBaseNodePositions():
             self.nodeMap[(x,y)] = TriNode(self,x,y)
-
+    
+        self.sectors = self.generateSectors(p_level, xs, ys)
         self.nodes = self.nodeMap.values()
 
         for node in self.nodes:
@@ -112,6 +135,24 @@ class TriGrid(object):
                 conn.e4 = edge
                 self.edges.append(edge)
 
+    def generateSectors(self, p_level, xs, ys):
+        sectors = []
+        winx, winy = p_level.p_game.p_window.get_size()
+        secxs, secys = winx + 2*xs, winy + 2*ys
+        for nx,ny in self.nodeMap.keys():
+            seced = False
+            for sector in sectors:
+                if sector.inSector(nx,ny):
+                    seced = True
+                    sector.nodes.append(self.nodeMap[nx,ny])
+            if not seced:
+                newx, newy = (nx/secxs)*secxs, (ny/secys)*secys
+                newSector = Sector(newx, newy, secxs, secys)
+                newSector.nodes.append(self.nodeMap[nx,ny])
+                sectors.append(newSector)
+        return sectors            
+
+
 
     def generateBaseNodePositions(self):
         shift = 1 
@@ -130,7 +171,6 @@ class TriGrid(object):
                 contourMap += nodeMap((x,y)).z
 
     def contour(self, contourMap):
-        print(contourMap)
         valid = ['0', '1', '2', '3', '4', 'w']
         def getNextContour(contourMap):
             linearMap = ""
@@ -175,7 +215,7 @@ class TriGrid(object):
         return self.nodeMap.get((x,y), None)
 
     def activate(self):
-        self.parent.push_handlers(level_draw=self.draw)
+        self.p_level.push_handlers(level_draw=self.draw)
  
     def getNodeAt(self, x, y):
         return self.nodeMap.get((x,y), None)
@@ -241,36 +281,39 @@ class TriGrid(object):
         gl.glLoadIdentity()
         gl.glBegin(gl.GL_TRIANGLES)
         gl.glColor3f(1.0,1.0,1.0)
-        for node in self.nodes:
-            if node.e4:
-                node2 = node.e4.end
-                if node2.e6:
-                    node3 = node2.e6.end
-                    gl.glColor3f(*color[node.mat])
-                    gl.glVertex2f(node.vx-camera.x, node.vy-camera.y)
-                    gl.glColor3f(*color[node2.mat])
-                    gl.glVertex2f(node2.vx-camera.x, node2.vy-camera.y)
-                    gl.glColor3f(*color[node3.mat])
-                    gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
-            if node.e5:
-                node2 = node.e5.end
-                if node2.e3:
-                    node3 = node2.e3.start
-                    gl.glColor3f(*color[node.mat])
-                    gl.glVertex2f(node.vx-camera.x, node.vy-camera.y)
-                    gl.glColor3f(*color[node2.mat])
-                    gl.glVertex2f(node2.vx-camera.x, node2.vy-camera.y)
-                    gl.glColor3f(*color[node3.mat])
-                    gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
+        for sector in self.sectors:
+            if camera.inCamera(sector.x, sector.y, sector.w, sector.h):
+                for node in sector.nodes:
+                    if node.e4:
+                        node2 = node.e4.end
+                        if node2.e6:
+                            node3 = node2.e6.end
+                            gl.glColor3f(*color[node.mat])
+                            gl.glVertex2f(node.vx-camera.x, node.vy-camera.y)
+                            gl.glColor3f(*color[node2.mat])
+                            gl.glVertex2f(node2.vx-camera.x, node2.vy-camera.y)
+                            gl.glColor3f(*color[node3.mat])
+                            gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
+                    if node.e5:
+                        node2 = node.e5.end
+                        if node2.e3:
+                            node3 = node2.e3.start
+                            gl.glColor3f(*color[node.mat])
+                            gl.glVertex2f(node.vx-camera.x, node.vy-camera.y)
+                            gl.glColor3f(*color[node2.mat])
+                            gl.glVertex2f(node2.vx-camera.x, node2.vy-camera.y)
+                            gl.glColor3f(*color[node3.mat])
+                            gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
         gl.glEnd()
-                
         gl.glBegin(gl.GL_LINES)
         gl.glColor3f(1.0,1.0,1.0)
-        for edge in self.edges:
-            gl.glVertex2f(edge.start.vx-camera.x, edge.start.vy-camera.y)
-            gl.glVertex2f(edge.end.vx-camera.x, edge.end.vy-camera.y)
+        for sector in self.sectors:
+            if camera.inCamera(sector.x, sector.y, sector.w, sector.h):
+                for node in sector.nodes:
+                    for edge in node.leftEdgeList():
+                        gl.glVertex2f(edge.start.vx-camera.x, edge.start.vy-camera.y)
+                        gl.glVertex2f(edge.end.vx-camera.x, edge.end.vy-camera.y)
         gl.glEnd()
-
         if self.selected:
             s = self.selected
             sz = 4
@@ -281,7 +324,7 @@ class TriGrid(object):
             gl.glVertex2d(s.vx+sz-camera.x, s.vy+sz-camera.y)
             gl.glVertex2d(s.vx+sz-camera.x, s.vy-sz-camera.y)
             gl.glEnd()
-
+                    
 
 
 
