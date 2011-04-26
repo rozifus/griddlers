@@ -3,14 +3,15 @@ from __future__ import print_function
 from pyglet import event
 from pyglet.window import mouse, key
 
-import trigrid
+from grid import trigrid
 import mapgen
 
 class Level(event.EventDispatcher):
     def __init__(self, p_game):
         self.p_game = p_game
-        self.camera = Camera(0,0, *self.p_game.p_window.get_size())
-        self.grid = trigrid.TriGrid(self, 50, 50, 30, 45)
+        winx, winy = self.p_game.p_window.get_size()
+        self.camera = Camera(0,0, winx, winy, 50)
+        self.grid = trigrid.TriGrid(self, 50, 50, 40, 60)
 
         try:
             hmap = open('hmap.txt', 'r')
@@ -59,13 +60,14 @@ Level.register_event_type('level_draw')
 
 
 class Camera(object):
-    def __init__(self, x, y, w, h):
+    def __init__(self, x, y, w, h, margin):
         self.x, self.y = x,y
         self.w, self.h = w,h
+        self.m = margin
 
     def inCamera(self, x, y, w, h):
-        if x+w > self.x and x < self.x+self.w \
-        and y+h > self.y and y < self.y+self.h:
+        if x+w > self.x-self.m and x < self.x+self.w+self.m \
+        and y+h > self.y-self.m and y < self.y+self.h+self.m:
             return True
         return False
 

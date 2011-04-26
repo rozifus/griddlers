@@ -4,8 +4,7 @@ from pyglet import window
 from pyglet import clock
 from pyglet import event
 
-import level
-
+import game_manager
 
 class GameWindow(window.Window):
     def __init__(self, *args, **kwargs):
@@ -14,7 +13,7 @@ class GameWindow(window.Window):
         self.inputManager = InputManager(self) 
         self.drawManager = WindowDrawManager(self)
         self.playerManager = None
-        self.gameManager = GameManager(self)
+        self.gameManager = game_manager.GameManager(self)
 
 class InputManager(object):
     def __init__(self, parent):
@@ -28,22 +27,13 @@ class WindowDrawManager(event.EventDispatcher):
         self.activate()
 
     def activate(self):
-        self.parent.push_handlers(on_draw=self.draw)
+        self.parent.push_handlers(self.on_draw)
 
-    def draw(self):
+    def on_draw(self):
         self.parent.clear()
         self.dispatch_event('window_draw')
         self.parent.flip()
 
 WindowDrawManager.register_event_type('window_draw')
 
-class GameManager(object):
-    def __init__(self, p_window):
-        self.p_window = p_window
-        self.level = None
-
-        self.loadLevel(None)
-
-    def loadLevel(self, levelFile):
-        self.level = level.Level(self)
    
