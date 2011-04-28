@@ -6,12 +6,15 @@ class TriNode(object):
     color['w'] = (0.1, 0.1, 0.9)
     color['g'] = (0.1, 0.9, 0.3)
     color['m'] = (0.9, 0.7, 0.2)
+    DEFAULT_MATERIAL = 'g'
+    DEFAULT_HEIGHT = '1'
 
-    def __init__(self, grid, x, y):
+    def __init__(self, grid, x, y, mat='g', z='1'):
+
         self.grid = grid
         self.content = None
-        self.mat = None
-        self.z = None
+        self.mat = mat 
+        self.z = z 
         self.x, self.y = x, y
         self.vx, self.vy = x, y
         self.e1 = self.e2 = self.e3 = None

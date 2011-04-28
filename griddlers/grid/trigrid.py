@@ -7,20 +7,36 @@ from trinode import TriNode
 from edge import Edge
 
 class TriGrid(object):
-    def __init__(self, p_level, x, y, xs, ys):
+    def __init__(self, p_level, xs, ys):
         self.p_level = p_level
-        self.x, self.y = x, y
         self.xs, self.ys = xs, ys
+        self.x, y = None, None
         self.nodeMap = {}
+        self.nodes = []
+        self.sectors = []
         self.edges = [] 
         self.selected = None
 
+    ########################
+    # Initialization Methods
+
+    def initializeBlank(self, x, y):
+        self.x, self.y = x, y
         for x,y in self.generateBaseNodePositions():
             self.nodeMap[(x,y)] = TriNode(self,x,y)
     
-        self.sectors = self.generateSectors(p_level, xs, ys)
         self.nodes = self.nodeMap.values()
+        self.edges = self.initializeEdges()
+        self.sectors = self.initializeSectors(None, None)
 
+    def initializeJson(self, levelJson):
+        import json
+        d = json.loads(levelJson)
+        self.initializeBlank(d['x'], d['y'])
+        self.setAllJson(levelJson)
+
+    def initializeEdges(self):
+        edges = []
         for node in self.nodes:
             conn = self.getNodeAt(node.x - self.xs, node.y + self.ys)
             if conn:
@@ -40,10 +56,11 @@ class TriGrid(object):
                 node.e3 = edge 
                 conn.e4 = edge
                 self.edges.append(edge)
+        return edges
 
-    def generateSectors(self, p_level, xs, ys):
+    def initializeSectors(self, xs, ys):
         sectors = []
-        winx, winy = p_level.p_game.p_window.get_size()
+        winx, winy = self.p_level.p_game.p_window.get_size()
         #secxs, secys = winx + 2*xs, winy + 2*ys
         secxs, secys = winx*2/3, winy*2/3
         #secxs, secys = winx*2/5, winy*4/5
@@ -61,7 +78,8 @@ class TriGrid(object):
                 sectors.append(newSector)
         return sectors            
 
-
+    #################
+    # Helper Funtions
 
     def generateBaseNodePositions(self):
         shift = 1 
@@ -75,57 +93,47 @@ class TriGrid(object):
     
     def getContour(self):
         contourMap = '' 
-        for y in range(self.y):
-            for x in range(self.x):
-                contourMap += nodeMap((x,y)).z
-
-    def contour(self, contourMap):
-        valid = ['0', '1', '2', '3', '4', 'w']
-        def getNextContour(contourMap):
-            linearMap = ""
-            for char in contourMap:
-                if char in valid:
-                    linearMap += char
-            for li in range(self.y)[::-1]:
-                line = linearMap[li*self.x: (li+1)*self.x]
-                for char in line:
-                    yield char
-
-        def applyContour(node, char):    
-            node.setZ(char)
-
-        contourGen = getNextContour(contourMap)
         for x,y in self.generateBaseNodePositions():
-            applyContour(self.getNodeAt(x,y), contourGen.next())
- 
+            contourMap += self.nodeMap[(x,y)].z
+        return contourMap        
+
+    def setContour(self, contourMap):
+        for i,xay in enumerate(self.generateBaseNodePositions()):
+            self.nodeMap[xay].setZ(contourMap[i])
+
     def getMaterial(self):
         materialMap = '' 
-        for y in range(self.y):
-            for x in range(self.x):
-                materialMap += nodeMap((x,y)).mat
-
-    def materialize(self, materialMap):
-        valid = ['w', 'g', 'm']
-        def getNextMaterial(materialMap):
-            linearMap = ""
-            for char in materialMap:
-                if char in valid:
-                    linearMap += char
-            for li in range(self.y)[::-1]:
-                line = linearMap[li*self.x: (li+1)*self.x]
-                for char in line:
-                    yield char
-
-        materialGen = getNextMaterial(materialMap)
         for x,y in self.generateBaseNodePositions():
-            self.getNodeAt(x,y).mat = materialGen.next()
-        
-    def getNodeAt(self, x, y):
-        return self.nodeMap.get((x,y), None)
+            materialMap += self.nodeMap[(x,y)].mat
+        return materialMap
+
+    def setMaterial(self, materialMap):
+        for i,xay in enumerate(self.generateBaseNodePositions()):
+            self.nodeMap[xay].mat = materialMap[i]
+
+    def getAllJson(self):
+        import json
+        d = {}
+        d['x'], d['y'] = self.x, self.y
+        d['material'] = self.getMaterial()
+        d['contour'] = self.getContour()
+        return json.dumps(d)
+
+    def setAllJson(self, levelData):
+        import json
+        d = json.loads(levelData)
+        if d['x'] == self.x and d['y'] == self.y:
+            self.setMaterial(d['material'])
+            self.setContour(d['contour'])
+            return True
+        return False
 
     def activate(self):
         self.p_level.push_handlers(level_draw=self.draw)
- 
+
+    ################
+    # Node Functions 
+
     def getNodeAt(self, x, y):
         return self.nodeMap.get((x,y), None)
 
@@ -185,6 +193,8 @@ class TriGrid(object):
             return minNode 
         return None
 
+    ######
+    # Draw 
 
     def draw(self, camera):
         gl.glLoadIdentity()
@@ -218,7 +228,7 @@ class TriGrid(object):
                             gl.glColor3f(*TriNode.color[node3.mat])
                             gl.glVertex2f(node3.vx-camera.x, node3.vy-camera.y)
         gl.glEnd()
-        print(secs, necs)
+        #print(secs, necs)
         gl.glBegin(gl.GL_LINES)
         gl.glColor3f(1.0,1.0,1.0)
         for sector in self.sectors:

@@ -1,30 +1,19 @@
 from __future__ import print_function
 
+from pyglet import resource
 from pyglet import event
 from pyglet.window import mouse, key
 
 from grid import trigrid
-import mapgen
+import data
 
 class Level(event.EventDispatcher):
     def __init__(self, p_game):
         self.p_game = p_game
         winx, winy = self.p_game.p_window.get_size()
         self.camera = Camera(0,0, winx, winy, 50)
-        self.grid = trigrid.TriGrid(self, 50, 50, 40, 60)
-
-        try:
-            hmap = open('hmap.txt', 'r')
-            mmap = open('mmap.txt', 'r')
-            self.grid.contour(hmap)
-            self.grid.materialize(mmap)
-            hmap.close()
-            mmap.close()
-        except:
-            mg = mapgen.MapGen(self.grid.x, self.grid.y)
-            cont, mat = mg.createDefaultMap()
-            self.grid.contour(cont)
-            self.grid.materialize(mat)
+        self.grid = trigrid.TriGrid(self, 40, 60)
+        self.grid.initializeBlank(50, 50)
 
         self.activate()
 
@@ -55,6 +44,14 @@ class Level(event.EventDispatcher):
         elif symbol == key.I:
             if self.grid.selected:
                 self.grid.selected.lowerZ()
+        elif symbol == key.S:
+            wfile = data.userFile('maps', "mapone.map", 'wt')
+            wfile.write(self.grid.getAllJson())
+            wfile.close()
+        elif symbol == key.L:
+            rfile = data.userFile('maps', "mapone.map", 'r')
+            self.grid.setAllJson(rfile.read())
+            rfile.close()
 
 Level.register_event_type('level_draw')
 
