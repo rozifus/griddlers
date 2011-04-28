@@ -6,12 +6,13 @@ from pyglet.window import mouse, key
 
 from grid import trigrid
 import data
+import camera
 
 class Level(event.EventDispatcher):
     def __init__(self, p_game):
         self.p_game = p_game
         winx, winy = self.p_game.p_window.get_size()
-        self.camera = Camera(0,0, winx, winy, 50)
+        self.camera = camera.Camera(0,0, winx, winy, 50)
         self.grid = trigrid.TriGrid(self, 40, 60)
         self.grid.initializeBlank(50, 50)
 
@@ -54,18 +55,5 @@ class Level(event.EventDispatcher):
             rfile.close()
 
 Level.register_event_type('level_draw')
-
-
-class Camera(object):
-    def __init__(self, x, y, w, h, margin):
-        self.x, self.y = x,y
-        self.w, self.h = w,h
-        self.m = margin
-
-    def inCamera(self, x, y, w, h):
-        if x+w > self.x-self.m and x < self.x+self.w+self.m \
-        and y+h > self.y-self.m and y < self.y+self.h+self.m:
-            return True
-        return False
 
  
