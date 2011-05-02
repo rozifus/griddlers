@@ -1,18 +1,18 @@
 import level
-import screen
+import menu 
 
 class GameManager(object):
     def __init__(self, p_window):
         self.p_window = p_window
         self.level = None
-        self.screen = None
+        self.menu = None
 
         #self.loadLevel(None)
-        self.loadScreen()
+        self.loadMenu()
 
     def loadLevel(self, levelFile):
         self.level = level.Level(self)
 
-    def loadScreen(self):
-        self.screen = screen.Screen(self)
+    def loadMenu(self):
+        self.menu = menu.Menu(self)
    
