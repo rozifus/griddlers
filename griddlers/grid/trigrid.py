@@ -129,7 +129,10 @@ class TriGrid(object):
         return False
 
     def activate(self):
-        self.p_level.push_handlers(level_draw=self.draw)
+        self.p_level.push_handlers(self.level_draw)
+
+    def deactivate(self):
+        self.p_level.pop_handlers()
 
     ################
     # Node Functions 
@@ -196,7 +199,7 @@ class TriGrid(object):
     ######
     # Draw 
 
-    def draw(self, camera):
+    def level_draw(self, camera):
         gl.glLoadIdentity()
         gl.glBegin(gl.GL_TRIANGLES)
         gl.glColor3f(1.0,1.0,1.0)

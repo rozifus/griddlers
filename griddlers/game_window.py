@@ -10,15 +10,11 @@ class GameWindow(window.Window):
     def __init__(self, *args, **kwargs):
         super(GameWindow, self).__init__(*args, **kwargs)
         self.has_exit = False
-        self.inputManager = InputManager(self) 
-        self.drawManager = WindowDrawManager(self)
         self.playerManager = None
         self.gameManager = game_manager.GameManager(self)
 
-class InputManager(object):
-    def __init__(self, parent):
-        self.parent = parent
 
+wm = """
 class WindowDrawManager(event.EventDispatcher):
     def __init__(self, parent):
         super(WindowDrawManager, self).__init__()
@@ -29,11 +25,15 @@ class WindowDrawManager(event.EventDispatcher):
     def activate(self):
         self.parent.push_handlers(self.on_draw)
 
+    def deactivate(self):
+        self.parent.pop_handlers()
+
     def on_draw(self):
         self.parent.clear()
         self.dispatch_event('window_draw')
         self.parent.flip()
 
 WindowDrawManager.register_event_type('window_draw')
+"""
 
    

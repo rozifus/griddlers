@@ -9,10 +9,6 @@ from pyglet import gl
 import data
 import camera
 
-class Style(object):
-    def __init__(self):
-        pass
-        
 
 class Button(object):
     @property
@@ -117,22 +113,22 @@ class Menu(event.EventDispatcher):
 
     def loadData(self):
         subby = SubMenu(self)
-        but1 = Button(200, 200, 200, 100, "button1", lambda:print("button1"))
+        but1loc = [x/2 for x in self.p_game.p_window.get_size()]
+        but1 = Button(but1loc[0], but1loc[1], 260, 80, "Map Editor", 
+                      self.p_game.startEditor)
         subby.elements.append(but1)
         self.submenus.append(subby)
         subby.activate()
-        self.activate()
 
     def activate(self):
-        self.p_game.p_window.drawManager.push_handlers(self.window_draw)
         self.p_game.p_window.push_handlers(
-                self.on_mouse_press, self.on_mouse_motion)
+                self.on_draw, self.on_mouse_press, self.on_mouse_motion)
 
     def deactivate(self):
-        self.p_game.p_window.drawManager.pop_handlers()
         self.p_game.p_window.pop_handlers()
 
-    def window_draw(self):
+    def on_draw(self):
+        self.p_game.p_window.clear()
         self.dispatch_event('menu_draw')
 
     def on_mouse_press(self, x, y, buttons, modi):

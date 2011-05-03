@@ -5,14 +5,29 @@ class GameManager(object):
     def __init__(self, p_window):
         self.p_window = p_window
         self.level = None
-        self.menu = None
+        self.mainMenu = None
 
         #self.loadLevel(None)
-        self.loadMenu()
+        self.initExtra()
 
-    def loadLevel(self, levelFile):
+    def initExtra(self):
+        self.mainMenu = menu.Menu(self)
+        self.mainMenu.activate()
+
+    def startEditor(self):
+        self.mainMenu.deactivate()
+        self.mainMenu = None
         self.level = level.Level(self)
+        print(dir(self.level))
+        self.level.activate()
 
-    def loadMenu(self):
-        self.menu = menu.Menu(self)
+    def quitEditor(self):
+        self.level.deactivate()
+        self.level = None
+        self.mainMenu = menu.Menu(self)
+        self.mainMenu.activate()
+
+        
+        
+        
    

@@ -16,29 +16,30 @@ class Level(event.EventDispatcher):
         self.grid = trigrid.TriGrid(self, 40, 60)
         self.grid.initializeBlank(50, 50)
 
-        self.activate()
-
     def activate(self):
         self.grid.activate()
-        self.p_game.p_window.drawManager.push_handlers(
-                        window_draw=self.draw)
-        self.p_game.p_window.push_handlers(on_mouse_drag=self.mouse_drag)
-        self.p_game.p_window.push_handlers(on_mouse_press=self.mouse_press)
-        self.p_game.p_window.push_handlers(on_key_press=self.key_press)
+        self.p_game.p_window.push_handlers(
+                self.on_draw, self.on_mouse_drag, 
+                self.on_mouse_press, self.on_key_press)
 
-    def draw(self):
+    def deactivate(self):
+        self.grid.deactivate()
+        self.p_game.p_window.pop_handlers()
+
+    def on_draw(self):
+        self.p_game.p_window.clear()
         self.dispatch_event('level_draw', self.camera)
 
-    def mouse_drag(self, x, y, dx, dy, buttons, modi):
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modi):
         if buttons & mouse.RIGHT:
             self.camera.x += dx
             self.camera.y += dy
 
-    def mouse_press(self, x, y, buttons, modi):
+    def on_mouse_press(self, x, y, buttons, modi):
         if buttons & mouse.LEFT:
             self.grid.selected = self.grid.getVisualNodeAt(self.camera, x, y)
 
-    def key_press(self, symbol, modi):
+    def on_key_press(self, symbol, modi):
         if symbol == key.U:
             if self.grid.selected:
                 self.grid.selected.raiseZ()
@@ -53,6 +54,9 @@ class Level(event.EventDispatcher):
             rfile = data.userFile('maps', "mapone.map", 'r')
             self.grid.setAllJson(rfile.read())
             rfile.close()
+        elif symbol == key.ESCAPE:
+            self.p_game.quitEditor()
+            return True
 
 Level.register_event_type('level_draw')
 
